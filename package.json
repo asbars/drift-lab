@@ -1,6 +1,7 @@
 {
   "name": "drift-lab",
   "version": "0.1.0",
+  "description": "Testing environment for drift event management",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -9,6 +10,8 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@supabase/ssr": "^0.8.0",
+    "@supabase/supabase-js": "^2.87.3",
     "next": "16.0.10",
     "react": "19.2.1",
     "react-dom": "19.2.1"
