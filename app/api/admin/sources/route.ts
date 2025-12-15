@@ -31,6 +31,8 @@ export async function POST(request: NextRequest) {
     const supabase = await createClient();
     const body = await request.json();
     
+    console.log('Creating source with data:', body);
+    
     const { data, error } = await supabase
       .from('sources')
       .insert(body)
@@ -38,18 +40,27 @@ export async function POST(request: NextRequest) {
       .single();
     
     if (error) {
-      console.error('Error creating source:', error);
+      console.error('Supabase error creating source:', error);
       return NextResponse.json(
-        { error: 'Failed to create source', details: error.message },
+        { 
+          error: 'Failed to create source', 
+          details: error.message,
+          hint: error.hint,
+          code: error.code 
+        },
         { status: 500 }
       );
     }
     
+    console.log('Source created successfully:', data);
     return NextResponse.json({ data });
-  } catch (error) {
-    console.error('Unexpected error:', error);
+  } catch (error: any) {
+    console.error('Unexpected error creating source:', error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { 
+        error: 'Internal server error',
+        details: error?.message || 'Unknown error'
+      },
       { status: 500 }
     );
   }

@@ -64,25 +64,54 @@ export default function EventForm({ event, mode }: EventFormProps) {
       // Get or create source
       let sourceId = formData.source_id;
       
-      if (!sourceId && formData.source_name) {
-        // Create a new source
-        const sourceResponse = await fetch('/api/admin/sources', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            name: formData.source_name,
-            url: 'https://manual',
-            scraper_type: 'manual',
-            scraper_config: {},
-            country_filter: ['Netherlands', 'Germany', 'Belgium', 'France'],
-            is_active: true,
-          }),
-        });
-        
-        if (sourceResponse.ok) {
-          const sourceData = await sourceResponse.json();
-          sourceId = sourceData.data.id;
+      if (!sourceId) {
+        // Try to find the default "Manual Entry" source first
+        const sourcesResponse = await fetch('/api/admin/sources');
+        if (sourcesResponse.ok) {
+          const sourcesData = await sourcesResponse.json();
+          const manualSource = sourcesData.data?.find(
+            (s: any) => s.name === 'Manual Entry' || s.scraper_type === 'manual'
+          );
+          
+          if (manualSource) {
+            sourceId = manualSource.id;
+          } else {
+            // If no manual source exists, create one
+            try {
+              const createResponse = await fetch('/api/admin/sources', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  name: formData.source_name || 'Manual Entry',
+                  url: 'https://manual',
+                  scraper_type: 'manual',
+                  scraper_config: {},
+                  country_filter: ['Netherlands', 'Germany', 'Belgium', 'France'],
+                  is_active: true,
+                }),
+              });
+              
+              if (createResponse.ok) {
+                const sourceData = await createResponse.json();
+                sourceId = sourceData.data.id;
+              } else {
+                const errorData = await createResponse.json();
+                throw new Error(`Failed to create source: ${errorData.error || 'Unknown error'}`);
+              }
+            } catch (sourceError) {
+              console.error('Error creating source:', sourceError);
+              alert(`Failed to create source. Please check your database connection and try again.`);
+              setLoading(false);
+              return;
+            }
+          }
         }
+      }
+
+      if (!sourceId) {
+        alert('Failed to get or create source. Please try again.');
+        setLoading(false);
+        return;
       }
 
       // Clean up form data
@@ -121,7 +150,7 @@ export default function EventForm({ event, mode }: EventFormProps) {
       }
     } catch (error) {
       console.error('Error submitting form:', error);
-      alert('Failed to save event');
+      alert('Failed to save event. Please check the console for details.');
     } finally {
       setLoading(false);
     }
