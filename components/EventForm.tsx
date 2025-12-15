@@ -114,14 +114,24 @@ export default function EventForm({ event, mode }: EventFormProps) {
         return;
       }
 
+      // Convert datetime-local format to ISO 8601 with timezone
+      const eventDate = formData.event_date 
+        ? new Date(formData.event_date).toISOString() 
+        : null;
+      
+      const eventEndDate = formData.event_end_date 
+        ? new Date(formData.event_end_date).toISOString() 
+        : null;
+
       // Clean up form data
       const submitData: any = {
         ...formData,
         source_id: sourceId,
+        event_date: eventDate,
+        event_end_date: eventEndDate,
         latitude: formData.latitude ? parseFloat(formData.latitude) : null,
         longitude: formData.longitude ? parseFloat(formData.longitude) : null,
         description: formData.description || null,
-        event_end_date: formData.event_end_date || null,
         venue: formData.venue || null,
         registration_url: formData.registration_url || null,
         price: formData.price || null,
